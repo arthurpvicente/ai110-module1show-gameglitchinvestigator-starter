@@ -59,11 +59,21 @@ The game ran without crashing and looked like a normal number-guessing game, but
 
 - How would you explain Streamlit "reruns" and session state to a friend who has never used Streamlit?
 
+    - Every time you click a button or type something, Streamlit re-runs the whole script from the top, like restarting the program. That would normally wipe out all your variables. `st.session_state` is like a backpack that doesn't get emptied between reruns — anything you put in it (like the score, secret number, or attempt count) is still there next time. This clicked for me with the "New Game" bug: the game stayed stuck because `st.session_state.status` never got reset, even though everything else restarted.
+
 ---
 
 ## 5. Looking ahead: your developer habits
 
 - What is one habit or strategy from this project that you want to reuse in future labs or projects?
   - This could be a testing habit, a prompting strategy, or a way you used Git.
+
+    - Writing a small pytest test for the *correct* behavior right after I find a bug, then using it to prove the fix actually works. I also liked keeping the game logic in its own file (`logic_utils.py`) so I could test it without running the whole app.
+
 - What is one thing you would do differently next time you work with AI on a coding task?
+
+    - Push back more on the AI's first answer and ask "why is this happening?" before accepting a fix. The `conftest.py` suggestion was a quick patch that didn't fix the real problem (the empty `logic_utils.py`), and I only caught that because I checked it with tests.
+
 - In one or two sentences, describe how this project changed the way you think about AI generated code.
+
+    - AI code can run with no errors and still be wrong — the backwards hints and the scoring bug both "worked" without crashing, but did the wrong thing. This taught me that "it runs" and "it's correct" are not the same, and tests are how you actually check.
