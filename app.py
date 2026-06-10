@@ -1,5 +1,6 @@
 import random
 import streamlit as st
+from logic_utils import guess_distance, closeness
 
 def get_range_for_difficulty(difficulty: str):
     if difficulty == "Easy":
@@ -67,7 +68,7 @@ def update_score(current_score: int, outcome: str, attempt_number: int):
 
     return current_score
 
-st.set_page_config(page_title="Glitchy Guesser", page_icon="🎮")
+st.set_page_config(page_title="Glitchy Guesser", page_icon="🎮", initial_sidebar_state="expanded")
 
 st.title("🎮 Game Glitch Investigator")
 st.caption("An AI-generated guessing game. Something is off.")
@@ -91,6 +92,20 @@ low, high = get_range_for_difficulty(difficulty)
 
 st.sidebar.caption(f"Range: {low} to {high}")
 st.sidebar.caption(f"Attempts allowed: {attempt_limit}")
+
+st.sidebar.markdown("---")
+st.sidebar.subheader("📜 Guess History")
+_history = st.session_state.get("history", [])
+if not _history:
+    st.sidebar.caption("No guesses yet — make your first guess!")
+else:
+    _arrows = {"Too Low": "⬆️", "Too High": "⬇️", "Win": "✅", "Invalid": "⚠️"}
+    for _rec in reversed(_history):
+        _arrow = _arrows.get(_rec.get("outcome", ""), "")
+        _lbl = _rec.get("label", "")
+        st.sidebar.markdown(f"**#{_rec.get('attempt')}** {_rec.get('guess')} {_arrow} {_lbl}")
+        if _rec.get("fraction") is not None:
+            st.sidebar.progress(_rec["fraction"])
 
 if "secret" not in st.session_state:
     st.session_state.secret = random.randint(low, high)
@@ -157,17 +172,31 @@ if submit:
     ok, guess_int, err = parse_guess(raw_guess)
 
     if not ok:
-        st.session_state.history.append(raw_guess)
+        st.session_state.history.append({
+            "attempt": st.session_state.attempts,
+            "guess": raw_guess,
+            "outcome": "Invalid",
+            "fraction": None,
+            "label": "",
+        })
         st.error(err)
     else:
-        st.session_state.history.append(guess_int)
-
         if st.session_state.attempts % 2 == 0:
             secret = str(st.session_state.secret)
         else:
             secret = st.session_state.secret
 
         outcome, message = check_guess(guess_int, secret)
+
+        _dist = guess_distance(guess_int, st.session_state.secret)
+        _frac, _lbl = closeness(_dist, high - low)
+        st.session_state.history.append({
+            "attempt": st.session_state.attempts,
+            "guess": guess_int,
+            "outcome": outcome,
+            "fraction": _frac,
+            "label": _lbl,
+        })
 
         if show_hint:
             st.warning(message)

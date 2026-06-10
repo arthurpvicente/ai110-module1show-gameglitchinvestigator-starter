@@ -10,15 +10,26 @@
 
 **What task did you give the agent?**
 
-<!-- Describe the goal you asked the agent to accomplish -->
+Add a "Guess History" feature to the Glitchy Guesser Streamlit app. The feature should:
+- Store rich per-guess records (attempt number, guess value, outcome, closeness fraction, and a 🔥/🌤️/❄️ label) in `st.session_state.history` instead of a flat list of raw values.
+- Compute closeness against the true integer secret at submit time (not the glitched even-attempt string secret) so the data is correct even after New Game resets the secret.
+- Render a 📜 Guess History section in the sidebar (newest-first) with a direction arrow (⬆️/⬇️/✅/⚠️), a labeled progress bar, and an empty-state caption when no guesses exist.
+- Persist history across New Games (do not clear it on reset).
+- Expose two pure helper functions (`guess_distance` and `closeness`) in `logic_utils.py` and cover them with pytest unit tests.
 
 **What did the agent do?**
 
-<!-- List the steps the agent took (files edited, commands run, etc.) -->
+1. Read `logic_utils.py`, `app.py`, `tests/test_game_logic.py`, and `ai_interactions.md` to understand the existing code structure.
+2. Added `guess_distance(guess, secret) -> int` and `closeness(distance, span) -> (float, str)` to `logic_utils.py` after `update_score`, with a try/except sentinel for un-coercible inputs and a guard against zero span.
+3. Added `from logic_utils import guess_distance, closeness` to `app.py`.
+4. Added the 📜 Guess History sidebar block after the existing sidebar captions, reading from `st.session_state.get("history", [])` (guarded so it works before session-state initializes).
+5. Replaced the two flat `st.session_state.history.append(...)` calls inside the `if submit:` block with structured dict records; invalid guesses get `fraction=None` and `outcome="Invalid"`, valid guesses get closeness computed against `st.session_state.secret` (the true int).
+6. Added 9 new pytest cases in `tests/test_game_logic.py` covering `guess_distance` (exact, symmetric, str secret, un-coercible sentinel) and `closeness` (Hot/Warm/Cold thresholds, negative-fraction clamp, zero-span no-crash).
+7. Ran `python -m pytest -q` — all 21 tests (12 original + 9 new) passed.
 
 **What did you have to verify or fix manually?**
 
-<!-- Describe anything the agent got wrong or that required human review -->
+No manual corrections were needed. The agent read the files before editing to match existing code style, used `st.session_state.get("history", [])` to avoid a KeyError in the sidebar (which renders before the `if "history" not in st.session_state` init block), and directed closeness computation at `st.session_state.secret` rather than the glitched local `secret` variable — all identified from reading the code rather than requiring human correction.
 
 ---
 

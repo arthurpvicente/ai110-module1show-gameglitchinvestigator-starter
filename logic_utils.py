@@ -58,3 +58,25 @@ def update_score(current_score: int, outcome: str, attempt_number: int):
         return current_score - 5
 
     return current_score
+
+
+def guess_distance(guess, secret) -> int:
+    """Return absolute distance between guess and secret as ints."""
+    try:
+        return abs(int(guess) - int(secret))
+    except (ValueError, TypeError):
+        return 10_000
+
+
+def closeness(distance: int, span: int) -> tuple:
+    """Return (fraction 0..1, label) indicating how close guess was."""
+    if span <= 0:
+        span = 1
+    fraction = max(0.0, 1.0 - distance / span)
+    if fraction >= 0.85:
+        label = "🔥 Hot"
+    elif fraction >= 0.5:
+        label = "🌤️ Warm"
+    else:
+        label = "❄️ Cold"
+    return fraction, label

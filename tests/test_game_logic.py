@@ -5,7 +5,7 @@ import sys
 # root (parent of this tests/ directory) to sys.path.
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from logic_utils import check_guess, parse_guess
+from logic_utils import check_guess, parse_guess, guess_distance, closeness
 from app import check_guess as app_check_guess, update_score
 
 def test_winning_guess():
@@ -82,3 +82,51 @@ def test_parse_guess_handles_extremely_large_numbers():
 def test_extremely_large_guess_is_too_high():
     result = check_guess(999999999999999999999999999999, 50)
     assert result == "Too High"
+
+
+# --- guess_distance tests ---
+
+def test_guess_distance_exact():
+    assert guess_distance(50, 50) == 0
+
+def test_guess_distance_symmetric():
+    assert guess_distance(60, 50) == 10
+    assert guess_distance(40, 50) == 10
+
+def test_guess_distance_str_secret():
+    # glitch tolerance: coerce str secret to int
+    assert guess_distance(50, "50") == 0
+    assert guess_distance(60, "50") == 10
+
+def test_guess_distance_uncoercible_returns_sentinel():
+    result = guess_distance("abc", 50)
+    assert result >= 1000
+
+
+# --- closeness tests ---
+
+def test_closeness_exact_hit_is_hot():
+    fraction, label = closeness(0, 99)
+    assert abs(fraction - 1.0) < 0.001
+    assert "Hot" in label
+
+def test_closeness_cold_at_far_distance():
+    fraction, label = closeness(99, 99)
+    assert fraction == 0.0
+    assert "Cold" in label
+
+def test_closeness_warm_mid_range():
+    # 1 - 40/99 ≈ 0.596, which falls in the Warm band
+    fraction, label = closeness(40, 99)
+    assert "Warm" in label
+
+def test_closeness_fraction_not_negative():
+    # distance beyond span should clamp to 0, not go negative
+    fraction, label = closeness(200, 99)
+    assert fraction >= 0.0
+
+def test_closeness_zero_span_no_crash():
+    # guard against ZeroDivisionError when span is 0
+    fraction, label = closeness(0, 0)
+    assert isinstance(fraction, float)
+    assert isinstance(label, str)
