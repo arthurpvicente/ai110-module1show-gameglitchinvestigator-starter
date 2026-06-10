@@ -33,18 +33,20 @@ def check_guess(guess, secret):
     if guess == secret:
         return "Win", "🎉 Correct!"
 
+    # FIX: Swapped the hint text so "Too High" -> "Go LOWER!" and "Too Low" ->
+    # "Go HIGHER!" (AI-assisted fix via Claude Code, agent mode).
     try:
         if guess > secret:
-            return "Too High", "📈 Go HIGHER!"
+            return "Too High", "📉 Go LOWER!"
         else:
-            return "Too Low", "📉 Go LOWER!"
+            return "Too Low", "📈 Go HIGHER!"
     except TypeError:
         g = str(guess)
         if g == secret:
             return "Win", "🎉 Correct!"
         if g > secret:
-            return "Too High", "📈 Go HIGHER!"
-        return "Too Low", "📉 Go LOWER!"
+            return "Too High", "📉 Go LOWER!"
+        return "Too Low", "📈 Go HIGHER!"
 
 
 def update_score(current_score: int, outcome: str, attempt_number: int):
@@ -54,9 +56,10 @@ def update_score(current_score: int, outcome: str, attempt_number: int):
             points = 10
         return current_score + points
 
+    # FIX: "Too High" now always subtracts 5 points, matching "Too Low"
+    # instead of adding points on even attempts (AI-assisted fix via Claude
+    # Code, agent mode).
     if outcome == "Too High":
-        if attempt_number % 2 == 0:
-            return current_score + 5
         return current_score - 5
 
     if outcome == "Too Low":
@@ -134,6 +137,10 @@ with col3:
 if new_game:
     st.session_state.attempts = 0
     st.session_state.secret = random.randint(1, 100)
+    # FIX: Reset status back to "playing" here so "New Game" actually starts a
+    # fresh round instead of re-triggering the game-over guard below
+    # (AI-assisted fix via Claude Code, agent mode).
+    st.session_state.status = "playing"
     st.success("New game started.")
     st.rerun()
 
