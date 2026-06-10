@@ -1,9 +1,21 @@
-# FIX: Refactored these functions out of app.py's stubs into logic_utils.py
-# (with the "Too High"/"Too Low" hint and scoring fixes applied) using
-# Claude Code, agent mode, so tests/test_game_logic.py can import and pass.
+"""Core game logic utilities for the Number Guessing Game.
 
-def get_range_for_difficulty(difficulty: str):
-    """Return (low, high) inclusive range for a given difficulty."""
+Refactored from app.py stubs into this module so tests/test_game_logic.py
+can import and exercise them independently.
+"""
+
+
+def get_range_for_difficulty(difficulty: str) -> tuple[int, int]:
+    """Return the inclusive (low, high) number range for a difficulty level.
+
+    Args:
+        difficulty: One of "Easy", "Normal", or "Hard". Any other value
+            falls back to the Normal range.
+
+    Returns:
+        A tuple (low, high) representing the inclusive guess range.
+        Easy → (1, 20), Normal → (1, 100), Hard → (1, 50).
+    """
     if difficulty == "Easy":
         return 1, 20
     if difficulty == "Normal":
@@ -13,11 +25,21 @@ def get_range_for_difficulty(difficulty: str):
     return 1, 100
 
 
-def parse_guess(raw: str):
-    """
-    Parse user input into an int guess.
+def parse_guess(raw: str) -> tuple[bool, int | None, str | None]:
+    """Parse raw user input into a validated integer guess.
 
-    Returns: (ok: bool, guess_int: int | None, error_message: str | None)
+    Accepts whole numbers and decimal strings (e.g. "7.0" → 7).
+    Rejects empty/None input and non-numeric strings.
+
+    Args:
+        raw: The raw string entered by the user, possibly None or empty.
+
+    Returns:
+        A 3-tuple (ok, guess_int, error_message):
+            - ok: True when parsing succeeded, False otherwise.
+            - guess_int: The parsed integer on success, None on failure.
+            - error_message: A human-readable error string on failure,
+              None on success.
     """
     if raw is None or raw == "":
         return False, None, "Enter a guess."
@@ -33,11 +55,16 @@ def parse_guess(raw: str):
     return True, value, None
 
 
-def check_guess(guess, secret):
-    """
-    Compare guess to secret and return the outcome.
+def check_guess(guess: int, secret: int) -> str:
+    """Compare a guess to the secret number and return the outcome.
 
-    Returns: "Win", "Too High", or "Too Low"
+    Args:
+        guess: The player's guessed integer.
+        secret: The target secret integer.
+
+    Returns:
+        "Win" if guess equals secret, "Too High" if guess exceeds secret,
+        or "Too Low" if guess is below secret.
     """
     if guess == secret:
         return "Win"
@@ -46,8 +73,21 @@ def check_guess(guess, secret):
     return "Too Low"
 
 
-def update_score(current_score: int, outcome: str, attempt_number: int):
-    """Update score based on outcome and attempt number."""
+def update_score(current_score: int, outcome: str, attempt_number: int) -> int:
+    """Update and return the score based on the outcome of a guess.
+
+    Winning awards 100 points minus 10 per attempt (1-indexed), with a
+    minimum of 10 points. Each wrong guess deducts 5 points. Unknown
+    outcomes leave the score unchanged.
+
+    Args:
+        current_score: The player's score before this guess.
+        outcome: The result string — "Win", "Too High", or "Too Low".
+        attempt_number: Zero-based index of the current attempt.
+
+    Returns:
+        The updated integer score after applying the outcome.
+    """
     if outcome == "Win":
         points = 100 - 10 * (attempt_number + 1)
         if points < 10:
@@ -60,16 +100,40 @@ def update_score(current_score: int, outcome: str, attempt_number: int):
     return current_score
 
 
-def guess_distance(guess, secret) -> int:
-    """Return absolute distance between guess and secret as ints."""
+def guess_distance(guess: int, secret: int) -> int:
+    """Return the absolute difference between guess and secret.
+
+    Both arguments are cast to int before subtraction. Returns a large
+    sentinel value (10_000) when either argument cannot be converted.
+
+    Args:
+        guess: The player's guess value (int or int-castable).
+        secret: The secret number (int or int-castable).
+
+    Returns:
+        Non-negative integer distance, or 10_000 on conversion error.
+    """
     try:
         return abs(int(guess) - int(secret))
     except (ValueError, TypeError):
         return 10_000
 
 
-def closeness(distance: int, span: int) -> tuple:
-    """Return (fraction 0..1, label) indicating how close guess was."""
+def closeness(distance: int, span: int) -> tuple[float, str]:
+    """Compute a closeness fraction and label given a distance and range span.
+
+    The fraction is clamped to [0.0, 1.0]. Labels are assigned by threshold:
+    fraction >= 0.85 → "🔥 Hot", >= 0.5 → "🌤️ Warm", else → "❄️ Cold".
+    A span of zero or less is treated as 1 to avoid division by zero.
+
+    Args:
+        distance: Absolute distance between guess and secret.
+        span: Total size of the number range (high − low).
+
+    Returns:
+        A 2-tuple (fraction, label) where fraction is a float in [0.0, 1.0]
+        and label is one of "🔥 Hot", "🌤️ Warm", or "❄️ Cold".
+    """
     if span <= 0:
         span = 1
     fraction = max(0.0, 1.0 - distance / span)

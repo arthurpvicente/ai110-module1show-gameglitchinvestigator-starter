@@ -61,18 +61,36 @@ tests/test_game_logic.py that verify the game handles these inputs gracefully.
 **Prompt used:**
 
 ```
-<!-- Paste the prompt you gave the AI -->
+Challenge 3: Professional Documentation and Linting
+
+Use your AI coding assistant to add professional-grade docstrings to every
+function in logic_utils.py. Then, ask your AI coding assistant to review
+your code for PEP 8 style compliance and apply its suggestions to resolve
+any formatting or naming issues it identifies.
 ```
 
 **Linting output before:**
 
 ```
-<!-- Paste relevant linter warnings/errors -->
+=== flake8 ===
+(no issues)
+
+=== pycodestyle ===
+(no issues)
+
+=== pydocstyle ===
+logic_utils.py:1 at module level:
+        D100: Missing docstring in public module
 ```
+
+Full before/after output is also committed in `linting_output.txt`.
 
 **Changes applied:**
 
-<!-- Describe what you changed based on the AI's suggestions -->
+- **flake8 / pycodestyle:** Both tools reported zero issues before the docstring upgrade — naming (snake_case), indentation, blank lines, and line length were already PEP 8 compliant. No renames or reformatting were needed.
+- **pydocstyle:** Flagged `D100: Missing docstring in public module`. To fix this (and generally raise documentation quality), the AI rewrote all six function docstrings to **Google style** (imperative one-line summary, `Args:` block with types and descriptions, `Returns:` block explaining the value or tuple layout). A module-level docstring was also added to clear the D100 violation.
+- **Type hints:** Incomplete parameter annotations (`check_guess`, `guess_distance`) were completed (`guess: int, secret: int`) and return types were made specific (`tuple[int, int]`, `tuple[float, str]`) — no logic was changed.
+- After the upgrade all three linters pass clean and all 21 pytest tests still pass.
 
 ---
 
