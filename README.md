@@ -85,12 +85,26 @@ number is between 1 and 100, 8 attempts allowed) where the secret number is
 
 ## 🧪 Test Results
 
-```
-# Paste your pytest output here, e.g.:
-# pytest tests/
-# tests/test_game_logic.py ......                                [100%]
+### Edge-case tests (Challenge 1)
 
-========================= 6 passed in 0.31s ==========================
+```
+$ python -m pytest -v
+collected 12 items
+
+tests/test_game_logic.py::test_winning_guess PASSED                      [  8%]
+tests/test_game_logic.py::test_guess_too_high PASSED                     [ 16%]
+tests/test_game_logic.py::test_guess_too_low PASSED                      [ 25%]
+tests/test_game_logic.py::test_too_high_hint_tells_player_to_go_lower PASSED [ 33%]
+tests/test_game_logic.py::test_too_low_hint_tells_player_to_go_higher PASSED [ 41%]
+tests/test_game_logic.py::test_too_high_always_subtracts_points PASSED   [ 50%]
+tests/test_game_logic.py::test_parse_guess_handles_negative_numbers PASSED [ 58%]
+tests/test_game_logic.py::test_negative_guess_is_too_low PASSED          [ 66%]
+tests/test_game_logic.py::test_parse_guess_handles_decimal_input PASSED  [ 75%]
+tests/test_game_logic.py::test_decimal_guess_can_still_win PASSED        [ 83%]
+tests/test_game_logic.py::test_parse_guess_handles_extremely_large_numbers PASSED [ 91%]
+tests/test_game_logic.py::test_extremely_large_guess_is_too_high PASSED  [100%]
+
+============================== 12 passed in 0.52s ==============================
 ```
 
 ## 🚀 Stretch Features

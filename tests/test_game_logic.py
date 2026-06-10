@@ -5,7 +5,7 @@ import sys
 # root (parent of this tests/ directory) to sys.path.
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from logic_utils import check_guess
+from logic_utils import check_guess, parse_guess
 from app import check_guess as app_check_guess, update_score
 
 def test_winning_guess():
@@ -39,3 +39,46 @@ def test_too_high_always_subtracts_points():
     # Bug 3: a "Too High" guess on an even attempt added 5 points instead of subtracting them
     assert update_score(50, "Too High", attempt_number=2) == 45
     assert update_score(50, "Too High", attempt_number=3) == 45
+
+# --- Edge case 1: negative numbers ---
+# A player could type a negative number. It should parse cleanly and just be
+# treated as "Too Low" (since it's below any possible secret), not crash.
+
+def test_parse_guess_handles_negative_numbers():
+    ok, value, err = parse_guess("-5")
+    assert ok is True
+    assert value == -5
+    assert err is None
+
+def test_negative_guess_is_too_low():
+    result = check_guess(-5, 50)
+    assert result == "Too Low"
+
+# --- Edge case 2: decimals ---
+# A player could type a decimal like "50.5". parse_guess should truncate it
+# to an int (50) instead of crashing or rejecting it as "not a number".
+
+def test_parse_guess_handles_decimal_input():
+    ok, value, err = parse_guess("50.5")
+    assert ok is True
+    assert value == 50
+    assert err is None
+
+def test_decimal_guess_can_still_win():
+    # "50.5" truncates to 50, so it should match a secret of 50
+    _, value, _ = parse_guess("50.5")
+    assert check_guess(value, 50) == "Win"
+
+# --- Edge case 3: extremely large numbers ---
+# A player could type a huge number (way bigger than the 1-100 range).
+# Python ints don't overflow, so this should parse fine and just be "Too High".
+
+def test_parse_guess_handles_extremely_large_numbers():
+    ok, value, err = parse_guess("999999999999999999999999999999")
+    assert ok is True
+    assert value == 999999999999999999999999999999
+    assert err is None
+
+def test_extremely_large_guess_is_too_high():
+    result = check_guess(999999999999999999999999999999, 50)
+    assert result == "Too High"
