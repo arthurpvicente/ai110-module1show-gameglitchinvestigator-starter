@@ -100,15 +100,63 @@ Full before/after output is also committed in `linting_output.txt`.
 
 **Task given to both models:**
 
-<!-- Describe what you asked each model to do -->
+Fix the backwards-hints bug in `check_guess`. When the player's guess is too high the function returns `"Go HIGHER!"` (should be `"Go LOWER!"`), and vice versa.
 
-| | Model A | Model B |
-|-|---------|---------|
-| **Model name** | | |
-| **Response summary** | | |
-| **More Pythonic?** | | |
-| **Clearer explanation?** | | |
+**Prompt used:**
+
+```
+I found a bug in my Python number-guessing game. When the player's guess is
+too high, the hint reads "Go HIGHER!" but it should say "Go LOWER!" — and
+vice versa. Here is the buggy function:
+
+def check_guess(guess, secret):
+    if guess == secret:
+        return "Win", "You got it!"
+    elif guess > secret:
+        return "Too High", "Go HIGHER!"
+    else:
+        return "Too Low", "Go LOWER!"
+
+Please fix the bug and briefly explain why it happened.
+```
+
+**Model A response — Claude (claude-sonnet-4-6):**
+
+```python
+def check_guess(guess, secret):
+    if guess == secret:
+        return "Win", "You got it!"
+    elif guess > secret:
+        return "Too High", "Go LOWER!"
+    else:
+        return "Too Low", "Go HIGHER!"
+```
+
+> The two hint messages were swapped. If the guess is too high, the player needs to go lower — not higher. Just switching those two strings fixes it. Everything else in the function was already correct.
+
+**Model B response — GitHub Copilot Chat:**
+
+```python
+def check_guess(guess, secret):
+    if guess == secret:
+        return "Win", "You got it!"
+    elif guess > secret:
+        # Guess is above the secret, so player needs to go lower
+        return "Too High", "Go LOWER!"
+    else:
+        # Guess is below the secret, so player needs to go higher
+        return "Too Low", "Go HIGHER!"
+```
+
+> The hint messages were mixed up. When the guess is too high, tell the player to go lower. When it's too low, tell them to go higher. I also added comments to each branch to make it easier to read.
+
+| | Model A (Claude) | Model B (GitHub Copilot Chat) |
+|-|-----------------|-------------------------------|
+| **Model name** | Claude claude-sonnet-4-6 | GitHub Copilot Chat |
+| **Response summary** | Fixed the two swapped strings and gave a short, clear reason why it was wrong. | Fixed the same strings and added comments inside the code explaining each branch. |
+| **More Pythonic?** | Yes — kept the code clean and didn't add anything extra. | Less so — the added comments just repeat what the code already says. |
+| **Clearer explanation?** | Yes — Claude explained both what was wrong and why, in plain language. | Okay, but it mostly just described the fix without saying why the bug happened. |
 
 **Which did you prefer and why?**
 
-<!-- Your conclusion -->
+I preferred Claude's response. It gave the same correct fix but explained the reason more clearly — the hints were backwards because they got mixed up when writing the code. Copilot's answer was fine too, but the extra comments it added inside the code didn't really help since the code is already easy to read. Claude's explanation was shorter and easier to understand.
