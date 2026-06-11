@@ -5,7 +5,7 @@ import sys
 # root (parent of this tests/ directory) to sys.path.
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from logic_utils import check_guess, parse_guess, guess_distance, closeness
+from logic_utils import check_guess, parse_guess, guess_distance, closeness, label_color, history_to_rows
 from app import check_guess as app_check_guess, update_score
 
 def test_winning_guess():
@@ -130,3 +130,19 @@ def test_closeness_zero_span_no_crash():
     fraction, label = closeness(0, 0)
     assert isinstance(fraction, float)
     assert isinstance(label, str)
+
+
+def test_label_color_maps_temperatures():
+    assert label_color("🔥 Hot") == "red"
+    assert label_color("🌤️ Warm") == "orange"
+    assert label_color("❄️ Cold") == "blue"
+    assert label_color("") == "gray"
+
+
+def test_history_to_rows_handles_invalid_row():
+    rows = history_to_rows([
+        {"attempt": 1, "guess": "abc", "outcome": "Invalid", "fraction": None, "label": ""},
+        {"attempt": 2, "guess": 50,    "outcome": "Win",     "fraction": 1.0,  "label": "🔥 Hot"},
+    ])
+    assert rows[0]["Temperature"] == "—" and rows[0]["Closeness %"] == "—"
+    assert rows[1]["Temperature"] == "🔥 Hot" and rows[1]["Closeness %"] == "100%"

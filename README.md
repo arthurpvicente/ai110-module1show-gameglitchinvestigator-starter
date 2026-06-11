@@ -109,4 +109,21 @@ tests/test_game_logic.py::test_extremely_large_guess_is_too_high PASSED  [100%]
 
 ## 🚀 Stretch Features
 
-- [ ] [If you choose to complete Challenge 4, describe the Enhanced UI changes here — a screenshot is optional]
+- [x] **Challenge 4: Enhanced Game UI**
+
+  All enhancements are **presentation-only** — no core logic (`check_guess`, `update_score`, `parse_guess`, `guess_distance`, `closeness`) was modified, and all existing tests still pass.
+
+  **1. Color-coded temperature hint (`app.py` — `if show_hint:` block)**
+  Previously the Hot/Warm/Cold temperature label appeared only in the sidebar history. The `if show_hint:` block in `app.py` now also renders the label as large colored text immediately after the directional warning, via:
+  ```python
+  st.markdown(f"### :{label_color(_lbl)}[{_lbl}] · {round(_frac * 100)}% there")
+  ```
+  The color token comes from the new pure helper `logic_utils.label_color()`, which maps `🔥 Hot → red`, `🌤️ Warm → orange`, `❄️ Cold → blue` (unknown/empty → `gray`). The closeness label `_lbl` and fraction `_frac` are reused from the values already computed for the history record at `app.py:192` — no logic is duplicated.
+
+  **2. Session summary table (`app.py` — `render_summary_table()`)**
+  A new `📊 Session Summary` `st.dataframe` shows every guess in the session with columns **Attempt #, Guess, Outcome, Temperature, Closeness %**. Rows are built by the new pure helper `logic_utils.history_to_rows()` from `st.session_state.history`; Invalid guesses (where `fraction is None`) display `—` for Temperature and Closeness %. The table is rendered by `render_summary_table()` in `app.py` in two places:
+  - **During play:** collapsed expander above the footer, so players can open it at any time.
+  - **Win / lose recap:** expanded automatically once the game ends, both on the submit-result screen and on the persistent game-over screen.
+
+  **3. New unit tests (`tests/test_game_logic.py`)**
+  Added `test_label_color_maps_temperatures` and `test_history_to_rows_handles_invalid_row` to cover the new helpers, including the Invalid-row edge case where `fraction is None`.

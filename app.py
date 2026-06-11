@@ -1,6 +1,6 @@
 import random
 import streamlit as st
-from logic_utils import guess_distance, closeness
+from logic_utils import guess_distance, closeness, history_to_rows, label_color
 
 def get_range_for_difficulty(difficulty: str):
     if difficulty == "Easy":
@@ -67,6 +67,14 @@ def update_score(current_score: int, outcome: str, attempt_number: int):
         return current_score - 5
 
     return current_score
+
+def render_summary_table(history, *, expanded=False):
+    rows = history_to_rows(history)
+    if not rows:
+        return  # no-op at import time / before first guess
+    with st.expander("📊 Session Summary", expanded=expanded):
+        st.dataframe(rows, use_container_width=True, hide_index=True)
+
 
 st.set_page_config(page_title="Glitchy Guesser", page_icon="🎮", initial_sidebar_state="expanded")
 
@@ -164,6 +172,7 @@ if st.session_state.status != "playing":
         st.success("You already won. Start a new game to play again.")
     else:
         st.error("Game over. Start a new game to try again.")
+    render_summary_table(st.session_state.get("history", []), expanded=True)
     st.stop()
 
 if submit:
@@ -200,6 +209,8 @@ if submit:
 
         if show_hint:
             st.warning(message)
+            if _lbl:
+                st.markdown(f"### :{label_color(_lbl)}[{_lbl}] · {round(_frac * 100)}% there")
 
         st.session_state.score = update_score(
             current_score=st.session_state.score,
@@ -222,6 +233,11 @@ if submit:
                     f"The secret was {st.session_state.secret}. "
                     f"Score: {st.session_state.score}"
                 )
+
+render_summary_table(
+    st.session_state.get("history", []),
+    expanded=st.session_state.get("status") != "playing",
+)
 
 st.divider()
 st.caption("Built by an AI that claims this code is production-ready.")

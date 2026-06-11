@@ -144,3 +144,54 @@ def closeness(distance: int, span: int) -> tuple[float, str]:
     else:
         label = "❄️ Cold"
     return fraction, label
+
+
+def label_color(label: str) -> str:
+    """Map a closeness label to a Streamlit markdown color token.
+
+    Returns "red", "orange", or "blue" for Hot/Warm/Cold respectively;
+    "gray" for unknown or empty labels (e.g. Invalid guesses).
+    Pure/stateless — no Streamlit dependency.
+
+    Args:
+        label: A closeness label string such as "🔥 Hot", "🌤️ Warm",
+            or "❄️ Cold". Matching is substring-based.
+
+    Returns:
+        A lowercase color token suitable for use in Streamlit's
+        :color[text] markdown syntax.
+    """
+    if "Hot" in label:
+        return "red"
+    if "Warm" in label:
+        return "orange"
+    if "Cold" in label:
+        return "blue"
+    return "gray"
+
+
+def history_to_rows(history: list) -> list:
+    """Convert session history records into display rows for st.dataframe.
+
+    Each record in history is a dict with keys: attempt, guess, outcome,
+    fraction (float or None), label (str). Invalid guesses (fraction is
+    None) render Temperature and Closeness % as "—".
+
+    Args:
+        history: List of guess-record dicts from st.session_state.history.
+
+    Returns:
+        List of flat dicts with keys "Attempt #", "Guess", "Outcome",
+        "Temperature", "Closeness %" ready for st.dataframe.
+    """
+    rows = []
+    for rec in history:
+        frac = rec.get("fraction")
+        rows.append({
+            "Attempt #": rec.get("attempt"),
+            "Guess": rec.get("guess"),
+            "Outcome": rec.get("outcome", ""),
+            "Temperature": rec.get("label") or "—",
+            "Closeness %": f"{round(frac * 100)}%" if frac is not None else "—",
+        })
+    return rows
